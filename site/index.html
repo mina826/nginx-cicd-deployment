@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Nginx CI/CD Status</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    .container {
+      width: min(680px, 92%);
+      background: white;
+      border: 1px solid #dfe3e8;
+      border-radius: 12px;
+      padding: 36px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: #146c43;
+      background: #d1e7dd;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin: 20px 0 8px;
+      font-size: 30px;
+    }
+
+    .description {
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .details {
+      margin-top: 28px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .label {
+      color: #64748b;
+    }
+
+    .value {
+      font-family: monospace;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <span class="status">Service Healthy</span>
+
+    <h1>Nginx CI/CD Deployment</h1>
+
+    <p class="description">
+      该页面由 GitHub Actions 自动检查、构建并部署。
+      页面中的版本信息由 Docker 构建阶段自动写入。
+    </p>
+
+    <section class="details">
+      <div class="row">
+        <span class="label">Service</span>
+        <span class="value">nginx-cicd-demo</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Version</span>
+        <span class="value">__VERSION__</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Commit</span>
+        <span class="value">__COMMIT_SHA__</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Build Time</span>
+        <span class="value">__BUILD_TIME__</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Health Endpoint</span>
+        <span class="value">/health</span>
+      </div>
+    </section>
+
+    <p class="footer">
+      Docker + Nginx + GitHub Actions
+    </p>
+  </main>
+</body>
+</html>
