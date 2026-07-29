@@ -1,0 +1,94 @@
+name: Nginx CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nginx-cicd-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, deploy and verify
+    runs-on:
+      - self-hosted
+      - nginx-cicd
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          bash -n scripts/deploy.sh
+          docker compose config -q
+
+          grep -q '__VERSION__' site/index.html
+          grep -q '__COMMIT_SHA__' site/index.html
+          grep -q '__BUILD_TIME__' site/index.html
+
+          echo "Configuration validation passed"
+
+      - name: Build versioned image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          VERSION="build-${GITHUB_RUN_NUMBER}"
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          IMAGE_REF="nginx-cicd-demo:${SHORT_SHA}"
+
+          docker build \
+            --build-arg VERSION="$VERSION" \
+            --build-arg COMMIT_SHA="$SHORT_SHA" \
+            --build-arg BUILD_TIME="$BUILD_TIME" \
+            -t "$IMAGE_REF" \
+            .
+
+          echo "IMAGE_REF=$IMAGE_REF" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Deploy with health check and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          chmod 755 scripts/deploy.sh
+          ./scripts/deploy.sh "$IMAGE_REF"
+
+      - name: Verify deployed version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fsS http://127.0.0.1:8080/health
+          curl -fsS http://127.0.0.1:8080 |
+            grep -F "$SHORT_SHA"
+
+          docker inspect nginx-cicd-demo \
+            --format 'image={{.Config.Image}} health={{.State.Health.Status}}'
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Nginx deployment"
+            echo
+            echo "- Status: ${{ job.status }}"
+            echo "- Commit: \`${GITHUB_SHA:0:12}\`"
+            echo "- Runner: \`${RUNNER_NAME}\`"
+            echo "- URL: http://192.168.159.128:8080"
+          } >> "$GITHUB_STEP_SUMMARY"

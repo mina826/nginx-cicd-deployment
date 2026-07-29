@@ -1,3 +1,5 @@
+name: nginx-cicd-demo
+
 services:
   web:
     image: ${IMAGE_REF:-nginx-cicd-demo:v0.1.0}
